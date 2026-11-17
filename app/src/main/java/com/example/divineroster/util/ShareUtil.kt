@@ -2,7 +2,6 @@ package com.example.divineroster.util
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import com.example.divineroster.data.repository.AppointmentWithMembers
 import java.text.SimpleDateFormat
@@ -14,16 +13,17 @@ object ShareUtil {
         val dateFormat = SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.getDefault())
         val formattedDate = dateFormat.format(Date(appointment.appointment.date))
 
-        val conductorName = appointment.conductor?.name ?: "TBD"
-        val organistName = appointment.organist?.name ?: "TBD"
+        val assignments = appointment.assignments()
         val notes = appointment.appointment.notes.ifEmpty { "None" }
+        val hymns = appointment.hymnsText()
 
         val shareMessage = buildString {
             append("⛪ *HymnLink Assignment* ⛪\n\n")
             append("📅 *Date*: $formattedDate\n")
-            append("🛠 *Service*: ${appointment.appointment.serviceType}\n")
-            append("🎤 *Conductor*: $conductorName\n")
-            append("🎹 *Organist*: $organistName\n")
+            append("🛠 *Event*: ${appointment.appointment.serviceType}\n")
+            append("🎤 *${assignments.primaryLabel}*: ${assignments.primaryValue}\n")
+            append("🎹 *${assignments.secondaryLabel}*: ${assignments.secondaryValue}\n")
+            if (hymns != null) append("🎶 *Hymns*:\n$hymns\n")
             append("📝 *Notes*: $notes\n\n")
             append("Please confirm your availability as soon as possible. Thank you!")
         }

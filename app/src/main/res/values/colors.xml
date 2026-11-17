@@ -1,40 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#4A6984</color>
-    <color name="primary_dark">#2C4257</color>
-    <color name="accent">#6C8EBF</color>
+    <!-- Brand palette: blue, grey and white only -->
+    <color name="primary">#1D4E89</color>
+    <color name="primary_dark">#12365F</color>
+    <color name="accent">#3B82C4</color>
 
     <!-- Light Theme Colors -->
-    <color name="light_bg">#F4F6F8</color>
+    <color name="light_bg">#F3F5F8</color>
     <color name="light_card">#FFFFFF</color>
-    <color name="light_text">#1C1C1E</color>
-    <color name="light_text_secondary">#7E7E82</color>
+    <color name="light_text">#1F2933</color>
+    <color name="light_text_secondary">#6B7785</color>
 
     <!-- Dark Theme Colors -->
-    <color name="dark_bg">#121212</color>
-    <color name="dark_card">#1E1E1E</color>
-    <color name="dark_text">#F2F2F7</color>
-    <color name="dark_text_secondary">#AEAEB2</color>
+    <color name="dark_bg">#11161C</color>
+    <color name="dark_card">#1B222B</color>
+    <color name="dark_text">#EEF2F6</color>
+    <color name="dark_text_secondary">#A3AEBB</color>
 
     <!-- Roster Badges -->
-    <color name="badge_conductor_bg">#E3F2FD</color>
-    <color name="badge_conductor_txt">#1565C0</color>
-    <color name="badge_organist_bg">#E8F5E9</color>
-    <color name="badge_organist_txt">#2E7D32</color>
-    <color name="badge_pending_bg">#FFF3E0</color>
-    <color name="badge_pending_txt">#E65100</color>
-    <color name="badge_approved_bg">#E0F2F1</color>
-    <color name="badge_approved_txt">#004D40</color>
+    <color name="badge_conductor_bg">#E3EEFA</color>
+    <color name="badge_conductor_txt">#1D4E89</color>
+    <color name="badge_organist_bg">#E9ECEF</color>
+    <color name="badge_organist_txt">#4A5560</color>
+    <color name="badge_pending_bg">#E9ECEF</color>
+    <color name="badge_pending_txt">#4A5560</color>
+    <color name="badge_approved_bg">#DCEBFA</color>
+    <color name="badge_approved_txt">#12365F</color>
 
-    <!-- Urgency Level Badges -->
+    <!-- Urgency / importance badges -->
     <color name="badge_normal_bg">#ECEFF1</color>
-    <color name="badge_normal_txt">#37474F</color>
-    <color name="badge_urgent_bg">#FFF3E0</color>
-    <color name="badge_urgent_txt">#EF6C00</color>
-    <color name="badge_high_bg">#FFEBEE</color>
-    <color name="badge_high_txt">#C62828</color>
+    <color name="badge_normal_txt">#4A5560</color>
+    <color name="badge_urgent_bg">#DCEBFA</color>
+    <color name="badge_urgent_txt">#1D6FB8</color>
+    <color name="badge_high_bg">#1D4E89</color>
+    <color name="badge_high_txt">#FFFFFF</color>
+
+    <!-- Actions -->
+    <color name="action_danger">#5F6B7A</color>
+    <color name="action_confirm">#1D4E89</color>
 
     <!-- Calendar -->
-    <color name="calendar_event_dot">#4A6984</color>
-    <color name="calendar_today_bg">#4A6984</color>
+    <color name="calendar_event_dot">#1D4E89</color>
+    <color name="calendar_today_bg">#1D4E89</color>
 </resources>

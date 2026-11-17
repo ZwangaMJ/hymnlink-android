@@ -1,13 +1,20 @@
 package com.example.divineroster.ui.dashboard
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -17,10 +24,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.divineroster.R
 import com.example.divineroster.data.auth.AuthManager
 import com.example.divineroster.data.auth.AuthState
+import com.example.divineroster.data.entity.AppointmentEntity
+import com.example.divineroster.data.entity.WordOfTheDay
 import com.example.divineroster.data.repository.AppointmentWithMembers
 import com.example.divineroster.databinding.ActivityDashboardBinding
+import com.example.divineroster.databinding.DialogAnnouncementBinding
+import com.example.divineroster.databinding.DialogWordOfTheDayBinding
 import com.example.divineroster.ui.auth.LoginActivity
 import com.example.divineroster.ui.auth.PendingApprovalActivity
+import com.example.divineroster.ui.common.BottomNav
 import com.example.divineroster.ui.schedule.RosterSchedulerActivity
 import com.example.divineroster.ui.settings.SettingsActivity
 import com.example.divineroster.ui.user.ManageUsersActivity
@@ -44,10 +56,14 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var rosterAdapterUrgent: AppointmentAdapter
     private lateinit var rosterAdapterNormal: AppointmentAdapter
     private lateinit var approvalsAdapter: ApprovalAdapter
-    private lateinit var tasksAdapter: TaskAdapter
+    private lateinit var announcementsAdapter: AnnouncementAdapter
     private lateinit var calendarAdapter: CalendarDayAdapter
 
     private var isFabMenuOpen = false
+    private var currentWord: WordOfTheDay? = null
+
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* reminders just stay silent if denied */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,10 +75,13 @@ class DashboardActivity : AppCompatActivity() {
         val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
         binding.tvCurrentMonth.text = monthFormat.format(Date()).uppercase()
 
-        setupRecyclerViews(isAdmin = false)
+        setupRecyclerViews()
         setupCalendar()
         setupDrawerNavigation()
         setupSpeedDialFAB()
+        setupWordOfTheDay()
+        BottomNav.setup(this, binding.bottomNavigation, R.id.nav_dashboard)
+        requestNotificationPermissionIfNeeded()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -86,11 +105,7 @@ class DashboardActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    viewModel.userRole.collectLatest { currentRole ->
-                        val isAdmin = currentRole == "ADMIN"
-                        binding.adminApprovalSection.visibility = if (isAdmin) View.VISIBLE else View.GONE
-                        setupRecyclerViews(isAdmin)
-                    }
+                    viewModel.userRole.collectLatest { currentRole -> applyRole(currentRole == "ADMIN") }
                 }
                 launch {
                     viewModel.appointments.collectLatest { list ->
@@ -114,30 +129,50 @@ class DashboardActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    viewModel.tasks.collectLatest { list ->
-                        tasksAdapter.submitList(list)
+                    viewModel.announcements.collectLatest { list ->
+                        announcementsAdapter.submitList(list)
+                        binding.sectionAnnouncements.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+                    }
+                }
+                launch {
+                    viewModel.messages.collect { message ->
+                        Toast.makeText(this@DashboardActivity, message, Toast.LENGTH_LONG).show()
+                    }
+                }
+                launch {
+                    viewModel.wordOfTheDay.collectLatest { word ->
+                        currentWord = word
+                        showWordOfTheDay(word)
                     }
                 }
             }
         }
     }
 
-    private fun setupRecyclerViews(isAdmin: Boolean) {
-        rosterAdapterHigh = AppointmentAdapter(isAdmin) { appointment ->
-            viewModel.deleteAppointment(appointment)
-        }
+    /** Admins get the approval queue, delete buttons, the announcement action and the word-of-the-day editor. */
+    private fun applyRole(isAdmin: Boolean) {
+        binding.adminApprovalSection.visibility = if (isAdmin) View.VISIBLE else View.GONE
+        binding.btnEditWord.visibility = if (isAdmin) View.VISIBLE else View.GONE
+        binding.btnFabAnnouncement.visibility = if (isAdmin) View.VISIBLE else View.GONE
+        rosterAdapterHigh.isAdmin = isAdmin
+        rosterAdapterUrgent.isAdmin = isAdmin
+        rosterAdapterNormal.isAdmin = isAdmin
+        announcementsAdapter.isAdmin = isAdmin
+        showWordOfTheDay(currentWord)
+    }
+
+    private fun setupRecyclerViews() {
+        val deleteAppointment = { appointment: AppointmentEntity -> viewModel.deleteAppointment(appointment) }
+
+        rosterAdapterHigh = AppointmentAdapter(false, deleteAppointment)
         binding.rosterHighImportanceRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.rosterHighImportanceRecyclerView.adapter = rosterAdapterHigh
 
-        rosterAdapterUrgent = AppointmentAdapter(isAdmin) { appointment ->
-            viewModel.deleteAppointment(appointment)
-        }
+        rosterAdapterUrgent = AppointmentAdapter(false, deleteAppointment)
         binding.rosterUrgentRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.rosterUrgentRecyclerView.adapter = rosterAdapterUrgent
 
-        rosterAdapterNormal = AppointmentAdapter(isAdmin) { appointment ->
-            viewModel.deleteAppointment(appointment)
-        }
+        rosterAdapterNormal = AppointmentAdapter(false, deleteAppointment)
         binding.rosterNormalRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.rosterNormalRecyclerView.adapter = rosterAdapterNormal
 
@@ -148,12 +183,9 @@ class DashboardActivity : AppCompatActivity() {
         binding.approvalsRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.approvalsRecyclerView.adapter = approvalsAdapter
 
-        tasksAdapter = TaskAdapter(
-            onCompleteToggled = { id, done -> viewModel.updateTaskCompletion(id, done) },
-            onDeleteClicked = { task -> viewModel.deleteTask(task) }
-        )
-        binding.tasksRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.tasksRecyclerView.adapter = tasksAdapter
+        announcementsAdapter = AnnouncementAdapter(false) { announcement -> viewModel.deleteAnnouncement(announcement) }
+        binding.announcementsRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.announcementsRecyclerView.adapter = announcementsAdapter
     }
 
     private fun setupDrawerNavigation() {
@@ -194,11 +226,7 @@ class DashboardActivity : AppCompatActivity() {
 
         val openAnnouncement = {
             toggleSpeedDialMenu()
-            val intent = Intent(this, RosterSchedulerActivity::class.java).apply {
-                putExtra("EXTRA_PRE_SELECTED_SERVICE", "Ministers meeting")
-                putExtra("EXTRA_PRE_SELECTED_URGENCY", "Normal")
-            }
-            startActivity(intent)
+            showAnnouncementDialog()
         }
         binding.btnFabAnnouncement.setOnClickListener { openAnnouncement() }
         binding.fabIconAnnouncement.setOnClickListener { openAnnouncement() }
@@ -206,8 +234,9 @@ class DashboardActivity : AppCompatActivity() {
         val openService = {
             toggleSpeedDialMenu()
             val intent = Intent(this, RosterSchedulerActivity::class.java).apply {
-                putExtra("EXTRA_PRE_SELECTED_SERVICE", "Sunday service")
-                putExtra("EXTRA_PRE_SELECTED_URGENCY", "High Importance")
+                putExtra(RosterSchedulerActivity.EXTRA_EVENT_KIND, AppointmentEntity.KIND_SERVICE)
+                putExtra(RosterSchedulerActivity.EXTRA_PRE_SELECTED_SERVICE, "Sunday service")
+                putExtra(RosterSchedulerActivity.EXTRA_PRE_SELECTED_URGENCY, "High Importance")
             }
             startActivity(intent)
         }
@@ -217,13 +246,104 @@ class DashboardActivity : AppCompatActivity() {
         val openMeeting = {
             toggleSpeedDialMenu()
             val intent = Intent(this, RosterSchedulerActivity::class.java).apply {
-                putExtra("EXTRA_PRE_SELECTED_SERVICE", "Choir meeting")
-                putExtra("EXTRA_PRE_SELECTED_URGENCY", "Urgent")
+                putExtra(RosterSchedulerActivity.EXTRA_EVENT_KIND, AppointmentEntity.KIND_MEETING)
+                putExtra(RosterSchedulerActivity.EXTRA_PRE_SELECTED_URGENCY, "Normal")
             }
             startActivity(intent)
         }
         binding.btnFabMeeting.setOnClickListener { openMeeting() }
         binding.fabIconMeeting.setOnClickListener { openMeeting() }
+    }
+
+    private fun setupWordOfTheDay() {
+        binding.btnEditWord.setOnClickListener { showWordOfTheDayDialog() }
+    }
+
+    private fun showWordOfTheDay(word: WordOfTheDay?) {
+        val isAdmin = binding.btnEditWord.visibility == View.VISIBLE
+        if (word == null || word.text.isBlank()) {
+            binding.tvWordText.text =
+                if (isAdmin) "Nothing shared yet - tap the pencil to share today's word." else "No word has been shared yet."
+            binding.tvWordReference.visibility = View.GONE
+            binding.tvWordMeta.visibility = View.GONE
+            return
+        }
+
+        binding.tvWordText.text = word.text
+        binding.tvWordReference.visibility = if (word.reference.isBlank()) View.GONE else View.VISIBLE
+        binding.tvWordReference.text = word.reference
+
+        val updated = SimpleDateFormat("EEE, d MMM", Locale.getDefault()).format(Date(word.updatedAt))
+        val byline = if (word.updatedByName.isBlank()) "Updated $updated" else "Updated $updated by ${word.updatedByName}"
+        val stale = isAdmin && !isToday(word.updatedAt)
+        binding.tvWordMeta.text = if (stale) "$byline - not updated today" else byline
+        binding.tvWordMeta.visibility = View.VISIBLE
+    }
+
+    private fun isToday(timeMillis: Long): Boolean {
+        val then = Calendar.getInstance().apply { timeInMillis = timeMillis }
+        val now = Calendar.getInstance()
+        return then.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+            then.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
+    }
+
+    private fun showWordOfTheDayDialog() {
+        val dialogBinding = DialogWordOfTheDayBinding.inflate(LayoutInflater.from(this))
+        currentWord?.let {
+            dialogBinding.etWordText.setText(it.text)
+            dialogBinding.etWordReference.setText(it.reference)
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Word of the day")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Publish", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val text = dialogBinding.etWordText.text.toString().trim()
+            if (text.isEmpty()) {
+                dialogBinding.etWordText.error = "Type the word of the day"
+                return@setOnClickListener
+            }
+            viewModel.publishWordOfTheDay(text, dialogBinding.etWordReference.text.toString().trim())
+            dialog.dismiss()
+        }
+    }
+
+    private fun showAnnouncementDialog() {
+        val dialogBinding = DialogAnnouncementBinding.inflate(LayoutInflater.from(this))
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("New announcement")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Post", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val text = dialogBinding.etAnnouncement.text.toString().trim()
+            if (text.isEmpty()) {
+                dialogBinding.etAnnouncement.error = "Type the announcement"
+                return@setOnClickListener
+            }
+            val importance = when (dialogBinding.rgAnnouncementImportance.checkedRadioButtonId) {
+                R.id.rbAnnUrgent -> "Urgent"
+                R.id.rbAnnHigh -> "High Importance"
+                else -> "Normal"
+            }
+            viewModel.postAnnouncement(text, importance)
+            dialog.dismiss()
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     private fun setupCalendar() {
@@ -271,6 +391,7 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        BottomNav.markSelected(binding.bottomNavigation, R.id.nav_dashboard)
         if (authManager.isDarkModeEnabled()) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         } else {

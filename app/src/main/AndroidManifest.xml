@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Saving downloaded sheet music / audio into the public Downloads folder (Android 9 and older only) -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:name=".DivineRosterApplication"
@@ -42,6 +47,14 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.music.MusicActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.tools.ToolsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.schedule.RosterSchedulerActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
@@ -71,6 +84,16 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.example.divineroster.ACTION_REMINDER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Rebuilds conductor reminders after a reboot or an app update (alarms don't survive either) -->
+        <receiver
+            android:name=".data.reminder.ReminderRescheduleReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

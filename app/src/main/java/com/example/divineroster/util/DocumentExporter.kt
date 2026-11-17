@@ -16,7 +16,7 @@ import java.util.*
 object DocumentExporter {
 
     fun exportToCsv(context: Context, appointments: List<AppointmentWithMembers>): File? {
-        val csvHeader = "ID,Date,Service Type,Conductor,Organist,Status,Notes\n"
+        val csvHeader = "ID,Date,Event,Conductor / Event coordinator,Organist / Must attend,Hymns,Urgency,Status,Notes\n"
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
         val csvContent = buildString {
@@ -24,13 +24,16 @@ object DocumentExporter {
             appointments.forEach { appWithMembers ->
                 val app = appWithMembers.appointment
                 val dateStr = dateFormat.format(Date(app.date))
-                val conductorName = escapeCsv(appWithMembers.conductor?.name ?: "TBD")
-                val organistName = escapeCsv(appWithMembers.organist?.name ?: "TBD")
+                val assignments = appWithMembers.assignments()
+                val conductorName = escapeCsv(assignments.primaryValue)
+                val organistName = escapeCsv(assignments.secondaryValue)
+                val hymns = escapeCsv(appWithMembers.hymnsText()?.replace("\n", "; ") ?: "")
+                val urgency = escapeCsv(app.urgencyLevel)
                 val serviceType = escapeCsv(app.serviceType)
                 val status = escapeCsv(app.status)
                 val notes = escapeCsv(app.notes)
 
-                append("${app.id},$dateStr,$serviceType,$conductorName,$organistName,$status,$notes\n")
+                append("${app.id},$dateStr,$serviceType,$conductorName,$organistName,$hymns,$urgency,$status,$notes\n")
             }
         }
 
@@ -88,8 +91,8 @@ object DocumentExporter {
 
         // Draw table headers
         canvas.drawText("Date & Service", 40f, yPosition, headerPaint)
-        canvas.drawText("Conductor", 200f, yPosition, headerPaint)
-        canvas.drawText("Organist", 350f, yPosition, headerPaint)
+        canvas.drawText("Conductor / Coordinator", 200f, yPosition, headerPaint)
+        canvas.drawText("Organist / Attendees", 350f, yPosition, headerPaint)
         canvas.drawText("Status", 480f, yPosition, headerPaint)
         yPosition += 20f
 
@@ -110,8 +113,9 @@ object DocumentExporter {
 
             val app = appWithMembers.appointment
             val dateStr = dateFormat.format(Date(app.date))
-            val conductorName = appWithMembers.conductor?.name ?: "TBD"
-            val organistName = appWithMembers.organist?.name ?: "TBD"
+            val assignments = appWithMembers.assignments()
+            val conductorName = assignments.primaryValue.take(22)
+            val organistName = assignments.secondaryValue.take(22)
 
             canvas.drawText(dateStr, 40f, yPosition, textPaint)
             canvas.drawText(app.serviceType, 40f, yPosition + 15f, textPaint)

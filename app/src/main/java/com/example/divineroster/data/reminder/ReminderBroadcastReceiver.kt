@@ -9,30 +9,48 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.divineroster.ui.dashboard.DashboardActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ReminderBroadcastReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == "com.example.divineroster.ACTION_REMINDER") {
-            val appointmentId = intent.getStringExtra("EXTRA_APPOINTMENT_ID") ?: return
-            val serviceType = intent.getStringExtra("EXTRA_SERVICE_TYPE") ?: "Church Service"
-            val label = intent.getStringExtra("EXTRA_TIME_LABEL") ?: "Roster"
-
-            sendLocalNotification(context, appointmentId, serviceType, label)
-        }
+    companion object {
+        const val ACTION_REMINDER = "com.example.divineroster.ACTION_REMINDER"
+        const val EXTRA_APPOINTMENT_ID = "EXTRA_APPOINTMENT_ID"
+        const val EXTRA_SERVICE_TYPE = "EXTRA_SERVICE_TYPE"
+        const val EXTRA_SERVICE_DATE = "EXTRA_SERVICE_DATE"
+        const val EXTRA_TIME_LABEL = "EXTRA_TIME_LABEL"
     }
 
-    private fun sendLocalNotification(context: Context, appointmentId: String, serviceType: String, label: String) {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != ACTION_REMINDER) return
+
+        val appointmentId = intent.getStringExtra(EXTRA_APPOINTMENT_ID) ?: return
+        val serviceType = intent.getStringExtra(EXTRA_SERVICE_TYPE) ?: "divine service"
+        val serviceDate = intent.getLongExtra(EXTRA_SERVICE_DATE, 0L)
+        val label = intent.getStringExtra(EXTRA_TIME_LABEL) ?: "soon"
+
+        sendLocalNotification(context, appointmentId, serviceType, serviceDate, label)
+    }
+
+    private fun sendLocalNotification(
+        context: Context,
+        appointmentId: String,
+        serviceType: String,
+        serviceDate: Long,
+        label: String
+    ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "divine_local_reminders"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Roster Reminders",
+                "Conductor Reminders",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Channels for local schedule alerts"
+                description = "Reminders before a service you are appointed to conduct"
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -40,25 +58,32 @@ class ReminderBroadcastReceiver : BroadcastReceiver() {
         val openIntent = Intent(context, DashboardActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+        val notificationId = appointmentId.hashCode() * 31 + label.hashCode()
         val pendingIntent = PendingIntent.getActivity(
             context,
-            appointmentId.hashCode(),
+            notificationId,
             openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = "$label Alert - HymnLink"
-        val message = "Reminder for upcoming $serviceType. Tap to view schedule details."
+        val whenText = if (serviceDate > 0) {
+            SimpleDateFormat("EEEE, d MMMM 'at' HH:mm", Locale.getDefault()).format(Date(serviceDate))
+        } else {
+            label
+        }
+        val title = "You conduct $serviceType $label"
+        val message = "$whenText. Tap to see the hymns and details."
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
             .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
 
-        notificationManager.notify(appointmentId.hashCode(), notification)
+        notificationManager.notify(notificationId, notification)
     }
 }

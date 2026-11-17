@@ -6,10 +6,16 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
     <!-- CoordinatorLayout containing main layout content -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBarLayout"
@@ -49,7 +55,7 @@
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
-                        android:text="HymnLink"
+                        android:text="Dashboard"
                         android:textSize="32sp"
                         android:textStyle="bold"
                         android:textColor="?android:textColorPrimary"
@@ -86,7 +92,83 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp"
                 android:paddingTop="16dp"
-                android:paddingBottom="120dp">
+                android:paddingBottom="96dp">
+
+                <!-- 0. Word of the day (admins update it daily) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardWordOfTheDay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/primary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="WORD OF THE DAY"
+                                android:textColor="#FFFFFF"
+                                android:alpha="0.75"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.1" />
+
+                            <ImageButton
+                                android:id="@+id/btnEditWord"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:background="?android:attr/selectableItemBackgroundBorderless"
+                                android:src="@drawable/ic_edit"
+                                android:contentDescription="Update word of the day"
+                                android:visibility="gone"
+                                app:tint="#FFFFFF" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvWordText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="No word has been shared yet."
+                            android:textColor="#FFFFFF"
+                            android:textSize="18sp"
+                            android:lineSpacingExtra="3dp" />
+
+                        <TextView
+                            android:id="@+id/tvWordReference"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/tvWordMeta"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:textColor="#FFFFFF"
+                            android:alpha="0.7"
+                            android:textSize="11sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <!-- 1. events pending Section (Visible for Admin only) -->
                 <LinearLayout
@@ -186,22 +268,30 @@
                         android:layout_marginBottom="24dp" />
                 </LinearLayout>
 
-                <!-- 3. service announcements -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="service announcements"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="?android:textColorPrimary"
-                    android:layout_marginBottom="12dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/tasksRecyclerView"
+                <!-- 3. announcements -->
+                <LinearLayout
+                    android:id="@+id/sectionAnnouncements"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:layout_marginBottom="32dp" />
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="announcements"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?android:textColorPrimary"
+                        android:layout_marginBottom="12dp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/announcementsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:layout_marginBottom="32dp" />
+                </LinearLayout>
 
                 <!-- 4. Month Display card at the bottom -->
                 <androidx.cardview.widget.CardView
@@ -380,6 +470,17 @@
             android:contentDescription="Open actions panel" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/cardBackgroundColor"
+            app:menu="@menu/bottom_nav_menu"
+            app:labelVisibilityMode="labeled"
+            app:itemIconTint="@color/bottom_nav_item"
+            app:itemTextColor="@color/bottom_nav_item" />
+    </LinearLayout>
 
     <!-- Pinned Slide Drawer (Slide-out menu displayed on right swipe) -->
     <com.google.android.material.navigation.NavigationView

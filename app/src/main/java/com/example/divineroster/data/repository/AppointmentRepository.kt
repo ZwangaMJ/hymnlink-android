@@ -18,6 +18,7 @@ data class AppointmentWithMembers(
 )
 
 interface AppointmentRepository {
+    fun getAllAppointments(): Flow<List<AppointmentEntity>>
     fun getAllAppointmentsWithMembers(): Flow<List<AppointmentWithMembers>>
     suspend fun getAppointmentById(id: String): AppointmentEntity?
     suspend fun insertAppointment(appointment: AppointmentEntity): String
@@ -36,6 +37,8 @@ class AppointmentRepositoryImpl @Inject constructor(
     private fun allAppointmentsFlow(): Flow<List<AppointmentEntity>> =
         appointmentsCollection.snapshotFlow()
             .map { snapshot -> snapshot.toObjects(AppointmentEntity::class.java).sortedBy { it.date } }
+
+    override fun getAllAppointments(): Flow<List<AppointmentEntity>> = allAppointmentsFlow()
 
     override fun getAllAppointmentsWithMembers(): Flow<List<AppointmentWithMembers>> {
         return combine(

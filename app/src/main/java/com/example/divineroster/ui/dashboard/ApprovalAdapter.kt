@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.divineroster.data.repository.AppointmentWithMembers
 import com.example.divineroster.databinding.ItemPendingApprovalBinding
+import com.example.divineroster.util.assignments
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,9 +33,9 @@ class ApprovalAdapter(
             binding.tvDate.text = dateFormat.format(Date(item.appointment.date))
             binding.tvUrgency.bindUrgencyBadge(item.appointment.urgencyLevel)
 
-            val conductor = item.conductor?.name ?: "TBD"
-            val organist = item.organist?.name ?: "TBD"
-            binding.tvDetails.text = "Conductor: $conductor • Organist: $organist"
+            val assignments = item.assignments()
+            binding.tvDetails.text =
+                "${assignments.primaryLabel}: ${assignments.primaryValue} • ${assignments.secondaryLabel}: ${assignments.secondaryValue}"
 
             binding.btnAccept.setOnClickListener {
                 onAcceptClicked(item.appointment.id)

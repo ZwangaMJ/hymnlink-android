@@ -52,14 +52,22 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    match /tasks/{taskId} {
+    // Announcements shown on the dashboard: everyone reads, only admins post and remove them.
+    match /announcements/{announcementId} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
 
-      // Any signed-in member can toggle their task's completion; only an Admin can edit anything else.
-      allow update: if isAdmin() ||
-        (isSignedIn() &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["isCompleted"]));
+    // App-wide settings such as the word of the day (config/wordOfTheDay), updated daily by an admin.
+    match /config/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Metadata for uploaded sheet music / audio. The files themselves are protected by storage.rules.
+    match /music/{musicId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }

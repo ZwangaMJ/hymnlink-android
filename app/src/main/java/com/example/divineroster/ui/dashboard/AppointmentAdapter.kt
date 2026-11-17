@@ -10,13 +10,24 @@ import com.example.divineroster.data.entity.AppointmentEntity
 import com.example.divineroster.data.repository.AppointmentWithMembers
 import com.example.divineroster.databinding.ItemAppointmentBinding
 import com.example.divineroster.util.ShareUtil
+import com.example.divineroster.util.assignments
+import com.example.divineroster.util.hymnsText
 import java.text.SimpleDateFormat
 import java.util.*
 
 class AppointmentAdapter(
-    private val isAdmin: Boolean,
+    isAdmin: Boolean,
     private val onDeleteClicked: (AppointmentEntity) -> Unit
 ) : ListAdapter<AppointmentWithMembers, AppointmentAdapter.ViewHolder>(DiffCallback) {
+
+    /** Admins see the delete button; changing it refreshes the visible cards. */
+    var isAdmin: Boolean = isAdmin
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemAppointmentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -35,8 +46,15 @@ class AppointmentAdapter(
             binding.tvDate.text = dateFormat.format(Date(item.appointment.date))
             binding.tvUrgency.bindUrgencyBadge(item.appointment.urgencyLevel)
 
-            binding.tvConductorName.text = item.conductor?.name ?: "TBD"
-            binding.tvOrganistName.text = item.organist?.name ?: "TBD"
+            val assignments = item.assignments()
+            binding.tvPrimaryLabel.text = assignments.primaryLabel
+            binding.tvConductorName.text = assignments.primaryValue
+            binding.tvSecondaryLabel.text = assignments.secondaryLabel
+            binding.tvOrganistName.text = assignments.secondaryValue
+
+            val hymns = item.hymnsText()
+            binding.tvHymns.visibility = if (hymns == null) View.GONE else View.VISIBLE
+            binding.tvHymns.text = hymns
 
             if (item.appointment.notes.isEmpty()) {
                 binding.tvNotes.visibility = View.GONE

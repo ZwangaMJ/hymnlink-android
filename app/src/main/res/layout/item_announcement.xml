@@ -12,59 +12,54 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:padding="16dp">
-
-        <CheckBox
-            android:id="@+id/cbTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="32dp"
-            android:minHeight="32dp" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="8dp">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvTaskTitle"
+                android:id="@+id/tvImportance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Select Prelude Music"
-                android:textSize="16sp"
+                android:text="NORMAL"
+                android:textSize="10sp"
                 android:textStyle="bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_badge_normal"
+                android:textColor="@color/badge_normal_txt" />
+
+            <TextView
+                android:id="@+id/tvAnnouncementText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Choir practice moved to 18:00."
+                android:textSize="15sp"
                 android:textColor="?android:textColorPrimary" />
 
             <TextView
-                android:id="@+id/tvTaskDesc"
+                android:id="@+id/tvAnnouncementMeta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Choose appropriate hymns for Sacrament"
-                android:textColor="?android:textColorSecondary"
-                android:textSize="13sp"
-                android:layout_marginTop="2dp" />
-
-            <TextView
-                android:id="@+id/tvTaskDueDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Due: Saturday, Nov 22"
-                android:textColor="@color/badge_pending_txt"
+                android:layout_marginTop="6dp"
+                android:text="Posted by Admin"
                 android:textSize="11sp"
-                android:layout_marginTop="4dp" />
+                android:textColor="?android:textColorSecondary" />
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnDeleteTask"
+            android:id="@+id/btnDeleteAnnouncement"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_delete"
-            app:tint="#D32F2F"
-            android:contentDescription="Delete Task" />
-
+            android:src="@drawable/ic_delete"
+            app:tint="@color/action_danger"
+            android:contentDescription="Delete announcement"
+            android:visibility="gone" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
