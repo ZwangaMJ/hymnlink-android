@@ -1,0 +1,65 @@
+rules_version = '2';
+
+// Paste this into the Firebase console: Firestore Database -> Rules -> replace -> Publish.
+// (Or deploy with the Firebase CLI: `firebase deploy --only firestore:rules`, if you set that up.)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "ADMIN" &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approvalStatus == "APPROVED";
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Self-signup: a user may only create their own doc, as pending, and can never grant themselves Admin.
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        request.resource.data.approvalStatus == "PENDING_APPROVAL" &&
+        request.resource.data.role != "ADMIN" &&
+        request.resource.data.hasLoginAccount == true;
+
+      // Admin directly adding a no-login roster member (e.g. a guest musician).
+      allow create: if isAdmin() &&
+        request.resource.data.hasLoginAccount == false &&
+        request.resource.data.approvalStatus == "APPROVED";
+
+      // Admins can approve/edit/manage any user. A user can edit their own doc's non-privileged
+      // fields, but can never change their own role or approval status.
+      allow update: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == userId &&
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.approvalStatus == resource.data.approvalStatus);
+
+      allow delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn();
+
+      // Anyone signed in can submit an appointment attributed to themselves; only an Admin
+      // can create one that's already APPROVED.
+      allow create: if isSignedIn() &&
+        request.resource.data.createdByUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.status == "PENDING_APPROVAL");
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+
+      // Any signed-in member can toggle their task's completion; only an Admin can edit anything else.
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["isCompleted"]));
+    }
+  }
+}

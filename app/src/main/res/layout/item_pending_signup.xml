@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="?attr/cardBackgroundColor">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvSignupName"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Jane Doe"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="?android:textColorPrimary" />
+
+            <TextView
+                android:id="@+id/tvSignupRequestedRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CHOIR MEMBER"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:background="@drawable/bg_badge_pending"
+                android:textColor="@color/badge_pending_txt" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSignupContact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="jane@example.com • 555-0199"
+            android:textColor="?android:textColorSecondary"
+            android:textSize="13sp"
+            android:layout_marginTop="2dp" />
+
+        <Button
+            android:id="@+id/btnApproveSignup"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:text="Approve"
+            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_rounded_button"
+            app:backgroundTint="#2E7D32" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

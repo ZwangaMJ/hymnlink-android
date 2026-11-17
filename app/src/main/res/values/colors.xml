@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#4A6984</color>
+    <color name="primary_dark">#2C4257</color>
+    <color name="accent">#6C8EBF</color>
+
+    <!-- Light Theme Colors -->
+    <color name="light_bg">#F4F6F8</color>
+    <color name="light_card">#FFFFFF</color>
+    <color name="light_text">#1C1C1E</color>
+    <color name="light_text_secondary">#7E7E82</color>
+
+    <!-- Dark Theme Colors -->
+    <color name="dark_bg">#121212</color>
+    <color name="dark_card">#1E1E1E</color>
+    <color name="dark_text">#F2F2F7</color>
+    <color name="dark_text_secondary">#AEAEB2</color>
+
+    <!-- Roster Badges -->
+    <color name="badge_conductor_bg">#E3F2FD</color>
+    <color name="badge_conductor_txt">#1565C0</color>
+    <color name="badge_organist_bg">#E8F5E9</color>
+    <color name="badge_organist_txt">#2E7D32</color>
+    <color name="badge_pending_bg">#FFF3E0</color>
+    <color name="badge_pending_txt">#E65100</color>
+    <color name="badge_approved_bg">#E0F2F1</color>
+    <color name="badge_approved_txt">#004D40</color>
+
+    <!-- Urgency Level Badges -->
+    <color name="badge_normal_bg">#ECEFF1</color>
+    <color name="badge_normal_txt">#37474F</color>
+    <color name="badge_urgent_bg">#FFF3E0</color>
+    <color name="badge_urgent_txt">#EF6C00</color>
+    <color name="badge_high_bg">#FFEBEE</color>
+    <color name="badge_high_txt">#C62828</color>
+
+    <!-- Calendar -->
+    <color name="calendar_event_dot">#4A6984</color>
+    <color name="calendar_today_bg">#4A6984</color>
+</resources>
